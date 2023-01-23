@@ -76,35 +76,38 @@
     }
     #showhide {
       padding: 0em 4em;
-    }
-    #showhide p {
-      display: inline;
+      display: flex;
+      justify-content: space-around;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
     }
     #showhide button {
       background-color: #E08955;
-      color: #44444C;
+      color: #140005;
       font-family: 'Lato', sans-serif;
       font-style: bold;
       font-weight: 700;
-      display: inline;
+      padding: 0.5em;
     }
     blockquote#description {
       font-style: italic;
       background-color: #C0C9CC;
       padding: 2em;
       margin: 1em;
-      border-radius: 3%;
+      border-radius: 1%;
     }
   </style>
 </head>
 <body>
-  <article>
+  <main>
     <h1>Query Cache Optimizations for Multiple Embeds</h1>
     <section class="intro">
       <div id="showhide">
         <p>This is an old description of Tableau's caching architecture</p>
         <button onclick="handleShowHide()">Show/Hide</button>
       </div>
+      <hr>
       <blockquote id="description" style="display: none;"><i>
         <p>From the information I have the server cache works as follows (corrections for inaccuracies/out of data info please community!)
         Server cache is split down into four layers - Tile Cache, Model Cache, Abstract Cache and Query Cache
@@ -156,12 +159,19 @@
         <div id="vizContainer5"></div>
       </div>
     </section>
-  </article>
-  <script type="text/javascript" src="https://demo.tableau.com/javascripts/api/tableau-2.min.js"></script>
+  </main>
+  <script type="text/javascript" src="https://demo.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script>
   <script type="text/javascript">
+    // an object containing an array of viz sheet names for each scenario
+    const scenarios = {
+      0 : ["ProductswoID","SaleswoID","ProfitwoID","QuantitywoID","AvgDiscountwoID"],
+      1 : ["Products","Sales","Profit","Quantity","AvgDiscount"],
+      2 : ["Productswmeasures","Saleswmeasures","Profitwmeasures","Quantitywmeasures","Avgdiscountwmeasures"]
+    }
+
     class Viz {
       constructor(scenario, sheetName) {
-        this.divID = this.createDivs(scenario, sheetName);
+        this.divID = this.createDiv(scenario, sheetName);
         // url is a path to the workbook and needs the sheetName parameter when new Viz objects are initialized 
         this.url = `https://demo.tableau.com/t/acortez/views/hsa-test-1m/${sheetName}`;
         this.options = {
@@ -174,8 +184,9 @@
           }
         }
       }
-
-      createDivs = (scenario, sheetName) => {
+      
+      // creates a div for the viz
+      createDiv = (scenario, sheetName) => {
         const section = document.getElementById(String(scenario));
         const newDiv = document.createElement("div");
         newDiv.id = sheetName;
@@ -184,13 +195,7 @@
       }
     }
 
-    const scenarios = {
-      0 : ["ProductswoID","SaleswoID","ProfitwoID","QuantitywoID","AvgDiscountwoID"],
-      1 : ["Products","Sales","Profit","Quantity","AvgDiscount"],
-      2 : ["Productswmeasures","Saleswmeasures","Profitwmeasures","Quantitywmeasures","Avgdiscountwmeasures"]
-    }
-
-
+    // creates an array of Viz objects to be initialized
     const createViz = (scenarios) => {
       console.log('scenarios:', scenarios);
       const vizArray = new Array();
@@ -203,6 +208,7 @@
       }
     }
 
+    // initializes the viz
     const initViz = (vizArray) => {
       // control the number of vizzes to test by changing the last number parameter in .slice()
       const clippedArray = vizArray.slice(0, 5);
@@ -216,23 +222,26 @@
       });
     }
 
-    const loadScenarios = (scenarios) => {
+    // handles the display of descriptive text
+    const handleShowHide = (this) => {
+      const x = document.getElementById("description");
+      if (x.style.display === "none") {
+        x.style.display = "block";
+        this.content
+      } else {
+        x.style.display = "none";
+      }
+    }
+
+    // embeds a set of vizzes for each scenario
+    const runScenarios = (scenarios) => {
       // creates an array of vizzes that will be passed to initViz()
       const vizArray = createViz(scenarios);
       // initViz(vizArray);
     }
 
     // run loadScenarios() once the body has finished loading
-    document.body.addEventListener("load", loadScenarios(scenarios));
-
-    const handleShowHide = () => {
-      const x = document.getElementById("description");
-      if (x.style.display === "none") {
-        x.style.display = "block";
-      } else {
-        x.style.display = "none";
-      }
-    }
+    document.body.addEventListener("load", runScenarios(scenarios));
   </script>
 </body>
 </html>
