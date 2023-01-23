@@ -78,7 +78,8 @@
       padding: 0em 4em;
     }
     #showhide p {
-      float: left;
+      display: inline;
+      /* float: left; */
     }
     #showhide button {
       background-color: #E08955;
@@ -86,7 +87,8 @@
       font-family: 'Lato', sans-serif;
       font-style: bold;
       font-weight: 700;
-      float: right;
+      display: inline;
+      /* float: right; */
     }
     #showhide::after {
       content: "";
@@ -96,104 +98,123 @@
     blockquote#description {
       font-style: italic;
       background-color: #C0C9CC;
-      padding: 1em 1.5em;
+      padding: 2em;
+      margin: 1em;
       border-radius: 3%;
-      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Query Cache Optimizations for Multiple Embeds</h1>
-  <section class="intro">
-    <div id="showhide">
-      <p>This is an old description of Tableau's caching architecture:</p>
-      <button onclick="handleShowHide()">Show/Hide</button>
-    </div>
-    <blockquote id="description"><i>
-      <p>From the information I have the server cache works as follows (corrections for inaccuracies/out of data info please community!)
-      Server cache is split down into four layers - Tile Cache, Model Cache, Abstract Cache and Query Cache
-    </p>
-    <ul>
-      <li><p><strong>Tile Cache:</strong> Cache of server side renders of workbooks & views. Used when the server shows static flat versions of views & thumbnails when navigating around. This cache is shared amongst all users who touch them (so not session specific). Probably taxes the vizql process a lot to produce these items so saves a large amount of processing to have them cached because these are commonly touched by a lot of users. Tableau will supposedly do some dark magic with default views and hiding some views behind a pre-rendered image(s) until its interacted with. Think of this as a static snapshot cache of your default views.</p></li>
-      <li><p><strong>Model Cache:</strong> "Next cache level down" from Tile Cache. Cache of data used to regenerate Tile Cache, but could be utilised on either the server or on the client-side. This is only used when there are no user filters in play. There's one Model cache per vizql process and is internal to the vizql processes.</p></li>
-      <li><p><strong>Abstract Cache:</strong> Data taken (included blended data) from Data sources is stored here. This cache can be pre-warmed (aka. Sith Techniques) by hitting visualisations (subscriptions work, as would API calls) because this cache is shared across visualisations. Filters, as always, aren't taken into account. Explaining the difference between this and the query cache is tricky but I think of it as though Tableau is trying to cache column data that exists in your visualisations, rather than a full data set.</p></li>
-      <li><p><strong>Query Cache - Native:</strong> The last place that Server will look before going away to the data source local to the server (or desktop). This is a store of data (the results sets) that's already been queried against a specific data sources already. Again, if a filter changes then the Native Cache can't be leveraged in a useful way. Queries against the native cache must match exactly before results can be pulled from there. This cache can be leveraged in desktop too.</p></li>
-      <li><p><strong>Query Cache - External:</strong> The last place that Server will look before going away to whatever external data source you're using. It is distributed across several of the background processes on server (and exists in desktop specifically for file-based data sources only). If server or desktop has to go away to an external data source (like a database table) this cache is consulted first, just like the native cache. This cache will live for 12 hours unless you specify a value in your Server Configuration settings (or choose the Refresh More Often option). In general, this is the only Cache that the Server Configuration tool has any control over. To my knowledge.</p></li>
-    </ul>
-    <p>Honestly, if you're looking for a faster performing report post cache warming i'd recommend trying to simplify you report design as much as possible. Remove filters and parameters that aren't commonly used, work with optimised extracts published to the server and only keep essential actions. The simpler a view is the more the server will be able to leverage it's cached data. I'd love to get the above clarified somewhere in at least published documentation (or a link to it if it exists!). Above has been mostly sourced from presentations and discussions @ tableau ontour conference</p>
-    <p><strong>Source:</strong> <a href="https://community.tableau.com/s/question/0D54T00000C5QBgSAN/how-does-tableau-caching-actually-works">https://community.tableau.com/s/question/0D54T00000C5QBgSAN/how-does-tableau-caching-actually-works</a></p>
-  </i></blockquote>
-  </section>
-  <section class="scenario">
-    <h2>Worst Case Scenario</h2>
-    <h4>(Query Cache Miss)</h4>
-    <p>No optimizations and forced cache misses by way of the <code>(refresh = yes)</code> parameter</p>
-    <div class="grid">
-      <div id="vizContainer1"></div>
-      <div id="vizContainer2"></div>
-      <div id="vizContainer3"></div>
-      <div id="vizContainer4"></div>
-      <div id="vizContainer5"></div>
-    </div>
-  </section>
-  <section class="scenario">
-    <h2>First Optimization</h2>
-    <h4>(Private Query Caching)</h4>
-    <p>Full data is cached when all filtering fields are in the query <code>(detail/view)</code> therefore caching is now possible</p>
-    <div class="grid">
-      <div id="vizContainer1"></div>
-      <div id="vizContainer2"></div>
-      <div id="vizContainer3"></div>
-      <div id="vizContainer4"></div>
-      <div id="vizContainer5"></div>
-    </div>
-  </section>
-  <section class="scenario">
-    <h2>Second Optimization</h2>
-    <h4>(Shared Query Caching)</h4>
-    <p>All embeds share the same query since all queried fields are added to <code>(detail/view)</code></p>
-    <div class="grid">
-      <div id="vizContainer1"></div>
-      <div id="vizContainer2"></div>
-      <div id="vizContainer3"></div>
-      <div id="vizContainer4"></div>
-      <div id="vizContainer5"></div>
-    </div>
-  </section>
+  <article>
+    <h1>Query Cache Optimizations for Multiple Embeds</h1>
+    <section class="intro">
+      <div id="showhide">
+        <p>This is an old description of Tableau's caching architecture</p>
+        <button onclick="handleShowHide()">Show/Hide</button>
+      </div>
+      <blockquote id="description" style="display: none;"><i>
+        <p>From the information I have the server cache works as follows (corrections for inaccuracies/out of data info please community!)
+        Server cache is split down into four layers - Tile Cache, Model Cache, Abstract Cache and Query Cache
+      </p>
+      <ul>
+        <li><p><strong>Tile Cache:</strong> Cache of server side renders of workbooks & views. Used when the server shows static flat versions of views & thumbnails when navigating around. This cache is shared amongst all users who touch them (so not session specific). Probably taxes the vizql process a lot to produce these items so saves a large amount of processing to have them cached because these are commonly touched by a lot of users. Tableau will supposedly do some dark magic with default views and hiding some views behind a pre-rendered image(s) until its interacted with. Think of this as a static snapshot cache of your default views.</p></li>
+        <li><p><strong>Model Cache:</strong> "Next cache level down" from Tile Cache. Cache of data used to regenerate Tile Cache, but could be utilised on either the server or on the client-side. This is only used when there are no user filters in play. There's one Model cache per vizql process and is internal to the vizql processes.</p></li>
+        <li><p><strong>Abstract Cache:</strong> Data taken (included blended data) from Data sources is stored here. This cache can be pre-warmed (aka. Sith Techniques) by hitting visualisations (subscriptions work, as would API calls) because this cache is shared across visualisations. Filters, as always, aren't taken into account. Explaining the difference between this and the query cache is tricky but I think of it as though Tableau is trying to cache column data that exists in your visualisations, rather than a full data set.</p></li>
+        <li><p><strong>Query Cache - Native:</strong> The last place that Server will look before going away to the data source local to the server (or desktop). This is a store of data (the results sets) that's already been queried against a specific data sources already. Again, if a filter changes then the Native Cache can't be leveraged in a useful way. Queries against the native cache must match exactly before results can be pulled from there. This cache can be leveraged in desktop too.</p></li>
+        <li><p><strong>Query Cache - External:</strong> The last place that Server will look before going away to whatever external data source you're using. It is distributed across several of the background processes on server (and exists in desktop specifically for file-based data sources only). If server or desktop has to go away to an external data source (like a database table) this cache is consulted first, just like the native cache. This cache will live for 12 hours unless you specify a value in your Server Configuration settings (or choose the Refresh More Often option). In general, this is the only Cache that the Server Configuration tool has any control over. To my knowledge.</p></li>
+      </ul>
+      <p>Honestly, if you're looking for a faster performing report post cache warming i'd recommend trying to simplify you report design as much as possible. Remove filters and parameters that aren't commonly used, work with optimised extracts published to the server and only keep essential actions. The simpler a view is the more the server will be able to leverage it's cached data. I'd love to get the above clarified somewhere in at least published documentation (or a link to it if it exists!). Above has been mostly sourced from presentations and discussions @ tableau ontour conference</p>
+      <p><strong>Source:</strong> <a href="https://community.tableau.com/s/question/0D54T00000C5QBgSAN/how-does-tableau-caching-actually-works">https://community.tableau.com/s/question/0D54T00000C5QBgSAN/how-does-tableau-caching-actually-works</a></p>
+    </i></blockquote>
+    </section>
+    <section class="scenario" id="0">
+      <h2>Worst Case Scenario</h2>
+      <h4>(Query Cache Miss)</h4>
+      <p>No optimizations and forced cache misses by way of the <code>(refresh = yes)</code> parameter</p>
+      <div class="grid">
+        <div id="vizContainer1"></div>
+        <div id="vizContainer2"></div>
+        <div id="vizContainer3"></div>
+        <div id="vizContainer4"></div>
+        <div id="vizContainer5"></div>
+      </div>
+    </section>
+    <section class="scenario" id="1">
+      <h2>First Optimization</h2>
+      <h4>(Private Query Caching)</h4>
+      <p>Full data is cached when all filtering fields are in the query <code>(detail/view)</code> therefore caching is now possible</p>
+      <div class="grid">
+        <div id="vizContainer1"></div>
+        <div id="vizContainer2"></div>
+        <div id="vizContainer3"></div>
+        <div id="vizContainer4"></div>
+        <div id="vizContainer5"></div>
+      </div>
+    </section>
+    <section class="scenario" id="2">
+      <h2>Second Optimization</h2>
+      <h4>(Shared Query Caching)</h4>
+      <p>All embeds share the same query since all queried fields are added to <code>(detail/view)</code></p>
+      <div class="grid">
+        <div id="vizContainer1"></div>
+        <div id="vizContainer2"></div>
+        <div id="vizContainer3"></div>
+        <div id="vizContainer4"></div>
+        <div id="vizContainer5"></div>
+      </div>
+    </section>
+  </article>
   <script type="text/javascript" src="https://demo.tableau.com/javascripts/api/tableau-2.min.js"></script>
   <script type="text/javascript">
     class Viz {
-      constructor(sheetName, divID) {
+      constructor(scenario, sheetName) {
+        this.divID = this.createDivs(scenario, sheetName);
         // url is a path to the workbook and needs the sheetName parameter when new Viz objects are initialized 
         this.url = `https://demo.tableau.com/t/acortez/views/hsa-test-1m/${sheetName}`;
-        this.divID = divID;
         this.options = {
           hideTabs: true,
           hideToolbar: true,
           // this is how filters are applied to the embedded content
           "Employer ID": "24",
           onFirstInteractive: function () {
-            console.log(`${divID} has loaded successfully!`);
+            console.log(`${this.divID} has loaded successfully!`);
           }
         }
       }
+
+      createDivs = (scenario, sheetName) => {
+        const section = document.getElementById(String(scenario));
+        const newDiv = document.createElement("div");
+        newDiv.id = sheetName;
+        section.appendChild(newDiv);
+        return newDiv;
+      }
     }
 
-    // initializing Viz objects with a sheetName and target <div>
-    const viz1 = new Viz ("Productswmeasures", "vizContainer1");
-    const viz2 = new Viz ("Saleswmeasures", "vizContainer2");
-    const viz3 = new Viz ("Profitwmeasures", "vizContainer3");
-    const viz4 = new Viz ("Quantitywmeasures", "vizContainer4");
-    const viz5 = new Viz ("Avgdiscountwmeasures", "vizContainer5");
+    const scenarios = {
+      0 : ["ProductswoID","SaleswoID","ProfitwoID","QuantitywoID","AvgDiscountwoID"],
+      1 : ["Products","Sales","Profit","Quantity","AvgDiscount"],
+      2 : ["Productswmeasures","Saleswmeasures","Profitwmeasures","Quantitywmeasures","Avgdiscountwmeasures"]
+    }
 
-    // creates an array of vizzes that will be passed to initViz()
-    const vizArray = new Array(viz1, viz2, viz3, viz4, viz5);
+
+    const createViz = (scenarios) => {
+      console.log('scenarios:', scenarios);
+      const vizArray = new Array();
+      for(const scenario in scenarios) {
+        for(const sheet in scenario) {
+          const viz = new Viz(scenario, sheet);
+          vizArray.push(viz);
+        }
+        return vizArray;
+      }
+    }
 
     const initViz = (vizArray) => {
       // control the number of vizzes to test by changing the last number parameter in .slice()
-      const testArray = vizArray.slice(0, 5);
+      const clippedArray = vizArray.slice(0, 5);
       
-      testArray.forEach((vizObj) => {
+      clippedArray.forEach((vizObj) => {
         console.log(vizObj.divID, vizObj);
         // get the target <div> from the Viz object
         const containerDiv = document.getElementById(vizObj.divID);
@@ -202,8 +223,14 @@
       });
     }
 
-    // run initViz(vizArray) once the body has finished loading
-    // document.body.addEventListener("load", initViz(vizArray));
+    const loadScenarios = (scenarios) => {
+      // creates an array of vizzes that will be passed to initViz()
+      const vizArray = createViz(scenarios);
+      // initViz(vizArray);
+    }
+
+    // run loadScenarios() once the body has finished loading
+    document.body.addEventListener("load", loadScenarios(scenarios));
 
     const handleShowHide = () => {
       const x = document.getElementById("description");
