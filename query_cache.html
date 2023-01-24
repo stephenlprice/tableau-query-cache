@@ -160,7 +160,7 @@
       </div>
     </section>
   </main>
-  <script type="text/javascript" src="https://demo.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script>
+  <script type="module" src="https://online.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script>
   <script type="text/javascript">
     // an object containing an array of viz sheet names for each scenario
     const scenarios = {
@@ -171,27 +171,35 @@
 
     class Viz {
       constructor(scenario, sheetName) {
-        this.divID = this.createDiv(scenario, sheetName);
-        // url is a path to the workbook and needs the sheetName parameter when new Viz objects are initialized 
-        this.url = `https://demo.tableau.com/t/acortez/views/hsa-test-1m/${sheetName}`;
-        this.options = {
-          hideTabs: true,
-          hideToolbar: true,
-          // this is how filters are applied to the embedded content
-          "Employer ID": "24",
-          onFirstInteractive: function () {
-            console.log(`${this.divID} has loaded successfully!`);
-          }
-        }
+        this.sheetName = sheetName;
+        this.divID = this.createDiv(scenario, this.sheetName);
+        this.src = `https://demo.tableau.com/t/acortez/views/hsa-test-1m/${this.sheetName}`;
+        this.viz = new TableauViz();
+        viz.src = this.src;
+        viz.toolbar = 'hidden';
+        viz.tabs = 'hidden';
+        viz.addEventListener(TableauEventType.FirstVizSizeKnown, handleFirstInteractive);
+        viz.addEventListener(TableauEventType.FirstInteractive, handleFirstInteractive);
+
+        document.getElementById('tableauViz').appendChild(viz);
       }
       
       // creates a div for the viz
       createDiv = (scenario, sheetName) => {
         const section = document.getElementById(String(scenario));
-        const newDiv = document.createElement("div");
+        const grid = section.children.getElementsByClassName('grid')
+        const newDiv = document.createElement('div');
         newDiv.id = sheetName;
-        section.appendChild(newDiv);
+        grid.appendChild(newDiv);
         return newDiv;
+      }
+
+      handleFirstVizSizeKnown = (VizSize) => {
+        console.log(`${this.sheetName}'s VizSize: ${VizSize}`)
+      }
+
+      handleFirstInteractive = () => {
+        console.log(`${this.sheetName} is interactive!`)
       }
     }
 
@@ -233,12 +241,22 @@
       }
     }
 
-    // embeds a set of vizzes for each scenario
+    // runs all scenarios by embedding an array of vizzes
     const runScenarios = (scenarios) => {
       // creates an array of vizzes that will be passed to initViz()
       const vizArray = createViz(scenarios);
       // initViz(vizArray);
     }
+
+    window.onload = function () {
+   let viz = document.getElementById('tableauViz');
+
+    viz.addEventListener(TableauEventType.FirstInteractive, async (event) => {
+        console.log(`Event type is ${eventType}`);
+        // call methods to run immediately after loading
+    
+     });
+}
 
     // run loadScenarios() once the body has finished loading
     document.body.addEventListener("load", runScenarios(scenarios));
